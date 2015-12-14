@@ -1,0 +1,56 @@
+diff --git a/browser/aura/window_aura.cc b/browser/aura/window_aura.cc
+new file mode 100644
+index 0000000..5dc747d
+--- /dev/null
++++ b/browser/aura/window_aura.cc
+@@ -0,0 +1,38 @@
++// Copyright (c) 2015 University of Szeged.
++// Copyright (c) 2015 The Chromium Authors.
++// All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#include "sprocket/browser/window.h"
++
++#include "ui/aura/env.h"
++#include "ui/aura/window.h"
++#include "ui/aura/window_tree_host.h"
++#include "ui/gfx/screen.h"
++#include "ui/views/widget/desktop_aura/desktop_screen.h"
++#include "ui/views/widget/widget.h"
++#include "ui/views/widget/widget_delegate.h"
++
++// static
++void SprocketWindow::PlatformInitialize() {
++  gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE, views::CreateDesktopScreen());
++}
++
++// static
++void SprocketWindow::PlatformExit() {
++  aura::Env::DeleteInstance();
++}
++
++void SprocketWindow::PlatformCreateWindow(int width, int height) {
++  window_widget_ = new views::Widget;
++  views::Widget::InitParams params;
++  params.bounds = gfx::Rect(0, 0, width, height);
++  params.delegate = NULL;
++  window_widget_->Init(params);
++
++  window_ = window_widget_->GetNativeWindow();
++
++  window_->GetHost()->Show();
++  window_widget_->Show();
++}
+diff --git a/sprocket.gyp b/sprocket.gyp
+index a3803a1..30ebb65 100644
+--- a/sprocket.gyp
++++ b/sprocket.gyp
+@@ -26,6 +26,7 @@
+         '<(DEPTH)/content/content.gyp:content_browser',
+       ],
+       'sources': [
++        'browser/aura/window_aura.cc',
+         'browser/window.cc',
+         'browser/window.h',
+       ],
