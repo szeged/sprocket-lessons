@@ -26,6 +26,7 @@
         '<(DEPTH)/content/content.gyp:content_browser',
       ],
       'sources': [
+        'browser/aura/window_aura.cc',
         'browser/window.cc',
         'browser/window.h',
       ],
