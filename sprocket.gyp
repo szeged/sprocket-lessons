@@ -24,8 +24,11 @@
         '<(DEPTH)/content/content.gyp:content_resources',
         '<(DEPTH)/content/content.gyp:content_utility',
         '<(DEPTH)/content/content.gyp:content_browser',
+        '<(DEPTH)/ui/views/views.gyp:views',
       ],
       'sources': [
+        'browser/aura/views_delegate.cc',
+        'browser/aura/views_delegate.h',
         'browser/aura/window_aura.cc',
         'browser/window.cc',
         'browser/window.h',

@@ -11,6 +11,7 @@
 #include "ui/gfx/native_widget_types.h"
 
 namespace views {
+class ViewsDelegate;
 class Widget;
 }
 
@@ -29,6 +30,8 @@ class SprocketWindow {
   static void PlatformExit();
 
   void PlatformCreateWindow(int width, int height);
+
+  static views::ViewsDelegate* views_delegate_;
 
   gfx::NativeWindow window_;
   views::Widget* window_widget_;

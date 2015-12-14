@@ -6,6 +6,7 @@
 
 #include "sprocket/browser/window.h"
 
+#include "sprocket/browser/aura/views_delegate.h"
 #include "ui/aura/env.h"
 #include "ui/aura/window.h"
 #include "ui/aura/window_tree_host.h"
@@ -14,13 +15,18 @@
 #include "ui/views/widget/widget.h"
 #include "ui/views/widget/widget_delegate.h"
 
+views::ViewsDelegate* SprocketWindow::views_delegate_ = NULL;
+
 // static
 void SprocketWindow::PlatformInitialize() {
   gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE, views::CreateDesktopScreen());
+  views_delegate_ = new SprocketViewsDelegate;
 }
 
 // static
 void SprocketWindow::PlatformExit() {
+  delete views_delegate_;
+  views_delegate_ = NULL;
   aura::Env::DeleteInstance();
 }
 
