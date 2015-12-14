@@ -26,6 +26,8 @@
         '<(DEPTH)/content/content.gyp:content_browser',
       ],
       'sources': [
+        'browser/window.cc',
+        'browser/window.h',
       ],
     },
     {
