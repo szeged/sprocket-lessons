@@ -5,10 +5,11 @@
 // found in the LICENSE file.
 
 #include "content/public/app/content_main.h"
+#include "sprocket/app/main_delegate.h"
 
 int main(int argc, const char** argv) {
-
-  content::ContentMainParams params(NULL);
+  SprocketMainDelegate delegate;
+  content::ContentMainParams params(&delegate);
   params.argc = argc;
   params.argv = argv;
 

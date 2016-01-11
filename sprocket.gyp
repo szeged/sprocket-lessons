@@ -27,6 +27,8 @@
         '<(DEPTH)/ui/views/views.gyp:views',
       ],
       'sources': [
+        'app/main_delegate.cc',
+        'app/main_delegate.h',
         'browser/aura/views_delegate.cc',
         'browser/aura/views_delegate.h',
         'browser/aura/window_aura.cc',
