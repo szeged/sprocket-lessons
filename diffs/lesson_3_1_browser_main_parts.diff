@@ -1,0 +1,84 @@
+diff --git a/browser/browser_main_parts.cc b/browser/browser_main_parts.cc
+new file mode 100644
+index 0000000..499c651
+--- /dev/null
++++ b/browser/browser_main_parts.cc
+@@ -0,0 +1,31 @@
++// Copyright (c) 2015 University of Szeged.
++// Copyright (c) 2015 The Chromium Authors.
++// All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#include "sprocket/browser/browser_main_parts.h"
++
++#include "sprocket/browser/window.h"
++#include "ui/base/ime/input_method_initializer.h"
++
++SprocketBrowserMainParts::SprocketBrowserMainParts(
++    const content::MainFunctionParams& parameters) {
++}
++
++SprocketBrowserMainParts::~SprocketBrowserMainParts() {
++}
++
++void SprocketBrowserMainParts::PreEarlyInitialization() {
++  ui::InitializeInputMethodForTesting();
++}
++
++void SprocketBrowserMainParts::PreMainMessageLoopRun() {
++  SprocketWindow::Initialize();
++
++  SprocketWindow::CreateNewWindow(gfx::Size());
++}
++
++void SprocketBrowserMainParts::PostMainMessageLoopRun() {
++  SprocketWindow::Deinitialize();
++}
+diff --git a/browser/browser_main_parts.h b/browser/browser_main_parts.h
+new file mode 100644
+index 0000000..3d08eb2
+--- /dev/null
++++ b/browser/browser_main_parts.h
+@@ -0,0 +1,28 @@
++// Copyright (c) 2015 University of Szeged.
++// Copyright (c) 2015 The Chromium Authors.
++// All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#ifndef SPROCKET_BROWSER_BROWSER_MAIN_PARTS_H_
++#define SPROCKET_BROWSER_BROWSER_MAIN_PARTS_H_
++
++#include "content/public/browser/browser_main_parts.h"
++
++#include "content/public/common/main_function_params.h"
++
++class SprocketBrowserMainParts : public content::BrowserMainParts {
++
++ public:
++  explicit SprocketBrowserMainParts(
++      const content::MainFunctionParams& parameters);
++  ~SprocketBrowserMainParts() override;
++
++  void PreEarlyInitialization() override;
++  void PreMainMessageLoopRun() override;
++  void PostMainMessageLoopRun() override;
++
++  DISALLOW_COPY_AND_ASSIGN(SprocketBrowserMainParts);
++};
++
++#endif // SPROCKET_BROWSER_BROWSER_MAIN_PARTS_H_
+diff --git a/sprocket.gyp b/sprocket.gyp
+index 3373926..8c21bab 100644
+--- a/sprocket.gyp
++++ b/sprocket.gyp
+@@ -30,6 +30,8 @@
+         'browser/aura/views_delegate.cc',
+         'browser/aura/views_delegate.h',
+         'browser/aura/window_aura.cc',
++        'browser/browser_main_parts.cc',
++        'browser/browser_main_parts.h',
+         'browser/window.cc',
+         'browser/window.h',
+       ],

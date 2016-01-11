@@ -1,0 +1,65 @@
+diff --git a/browser/content_browser_client.cc b/browser/content_browser_client.cc
+new file mode 100644
+index 0000000..c52ffc4
+--- /dev/null
++++ b/browser/content_browser_client.cc
+@@ -0,0 +1,16 @@
++// Copyright (c) 2015 University of Szeged.
++// Copyright (c) 2015 The Chromium Authors.
++// All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#include "sprocket/browser/content_browser_client.h"
++
++#include "content/public/common/main_function_params.h"
++#include "sprocket/browser/browser_main_parts.h"
++
++content::BrowserMainParts* SprocketContentBrowserClient::CreateBrowserMainParts(
++    const content::MainFunctionParams& parameters) {
++  browser_main_parts_ = new SprocketBrowserMainParts(parameters);
++  return browser_main_parts_;
++}
+diff --git a/browser/content_browser_client.h b/browser/content_browser_client.h
+new file mode 100644
+index 0000000..54b5f47
+--- /dev/null
++++ b/browser/content_browser_client.h
+@@ -0,0 +1,24 @@
++// Copyright (c) 2015 University of Szeged.
++// Copyright (c) 2015 The Chromium Authors.
++// All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#ifndef SPROCKET_BROWSER_CONTENT_BROWSER_CLIENT_H_
++#define SPROCKET_BROWSER_CONTENT_BROWSER_CLIENT_H_
++
++#include "content/public/browser/content_browser_client.h"
++
++class SprocketBrowserMainParts;
++
++class SprocketContentBrowserClient : public content::ContentBrowserClient {
++
++ public:
++  content::BrowserMainParts* CreateBrowserMainParts(
++      const content::MainFunctionParams& parameters) override;
++
++ private:
++  SprocketBrowserMainParts* browser_main_parts_;
++};
++
++#endif  // SPROCKET_BROWSER_CONTENT_BROWSER_CLIENT_H_
+diff --git a/sprocket.gyp b/sprocket.gyp
+index 8c21bab..1d7a992 100644
+--- a/sprocket.gyp
++++ b/sprocket.gyp
+@@ -32,6 +32,8 @@
+         'browser/aura/window_aura.cc',
+         'browser/browser_main_parts.cc',
+         'browser/browser_main_parts.h',
++        'browser/content_browser_client.cc',
++        'browser/content_browser_client.h',
+         'browser/window.cc',
+         'browser/window.h',
+       ],

@@ -1,0 +1,103 @@
+diff --git a/app/main.cc b/app/main.cc
+index a234030..d3cd47e 100644
+--- a/app/main.cc
++++ b/app/main.cc
+@@ -5,10 +5,11 @@
+ // found in the LICENSE file.
+ 
+ #include "content/public/app/content_main.h"
++#include "sprocket/app/main_delegate.h"
+ 
+ int main(int argc, const char** argv) {
+-
+-  content::ContentMainParams params(NULL);
++  SprocketMainDelegate delegate;
++  content::ContentMainParams params(&delegate);
+   params.argc = argc;
+   params.argv = argv;
+ 
+diff --git a/app/main_delegate.cc b/app/main_delegate.cc
+new file mode 100644
+index 0000000..b918d76
+--- /dev/null
++++ b/app/main_delegate.cc
+@@ -0,0 +1,28 @@
++// Copyright (c) 2015 University of Szeged.
++// Copyright (c) 2015 The Chromium Authors.
++// All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#include "sprocket/app/main_delegate.h"
++
++#include "sprocket/browser/content_browser_client.h"
++#include "ui/base/resource/resource_bundle.h"
++
++SprocketMainDelegate::SprocketMainDelegate() {
++}
++
++SprocketMainDelegate::~SprocketMainDelegate() {
++}
++
++bool SprocketMainDelegate::BasicStartupComplete(int* exit_code) {
++  base::FilePath pak_file;
++  ui::ResourceBundle::InitSharedInstanceWithPakPath(pak_file);
++
++  return false;
++}
++
++content::ContentBrowserClient* SprocketMainDelegate::CreateContentBrowserClient() {
++  browser_client_.reset(new SprocketContentBrowserClient);
++  return browser_client_.get();
++}
+diff --git a/app/main_delegate.h b/app/main_delegate.h
+new file mode 100644
+index 0000000..9c60352
+--- /dev/null
++++ b/app/main_delegate.h
+@@ -0,0 +1,32 @@
++// Copyright (c) 2015 University of Szeged.
++// Copyright (c) 2015 The Chromium Authors.
++// All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#ifndef SPROCKET_APP_MAIN_DELEGATE_H_
++#define SPROCKET_APP_MAIN_DELEGATE_H_
++
++#include "content/public/app/content_main_delegate.h"
++
++#include "base/memory/scoped_ptr.h"
++
++class SprocketContentBrowserClient;
++
++class SprocketMainDelegate : public content::ContentMainDelegate {
++
++ public:
++  SprocketMainDelegate();
++  ~SprocketMainDelegate() override;
++
++ protected:
++  bool BasicStartupComplete(int* exit_code) override;
++  content::ContentBrowserClient* CreateContentBrowserClient() override;
++
++ private:
++  scoped_ptr<SprocketContentBrowserClient> browser_client_;
++
++  DISALLOW_COPY_AND_ASSIGN(SprocketMainDelegate);
++};
++
++#endif  // SPROCKET_APP_MAIN_DELEGATE_H_
+diff --git a/sprocket.gyp b/sprocket.gyp
+index 1d7a992..1c71728 100644
+--- a/sprocket.gyp
++++ b/sprocket.gyp
+@@ -27,6 +27,8 @@
+         '<(DEPTH)/ui/views/views.gyp:views',
+       ],
+       'sources': [
++        'app/main_delegate.cc',
++        'app/main_delegate.h',
+         'browser/aura/views_delegate.cc',
+         'browser/aura/views_delegate.h',
+         'browser/aura/window_aura.cc',
