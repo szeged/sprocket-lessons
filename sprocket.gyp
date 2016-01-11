@@ -32,6 +32,8 @@
         'browser/aura/window_aura.cc',
         'browser/browser_main_parts.cc',
         'browser/browser_main_parts.h',
+        'browser/content_browser_client.cc',
+        'browser/content_browser_client.h',
         'browser/window.cc',
         'browser/window.h',
       ],
