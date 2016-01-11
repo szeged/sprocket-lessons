@@ -30,6 +30,8 @@
         'browser/aura/views_delegate.cc',
         'browser/aura/views_delegate.h',
         'browser/aura/window_aura.cc',
+        'browser/browser_main_parts.cc',
+        'browser/browser_main_parts.h',
         'browser/window.cc',
         'browser/window.h',
       ],
