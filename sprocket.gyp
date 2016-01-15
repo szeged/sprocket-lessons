@@ -39,6 +39,8 @@
         'browser/content_browser_client.h',
         'browser/net/url_request_context_getter.cc',
         'browser/net/url_request_context_getter.h',
+        'browser/resource_context.cc',
+        'browser/resource_context.h',
         'browser/window.cc',
         'browser/window.h',
       ],
