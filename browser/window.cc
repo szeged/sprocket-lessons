@@ -12,6 +12,8 @@
 const int kDefaultWindowWidth = 800;
 const int kDefaultWindowHeight = 600;
 
+std::set<SprocketWindow*> SprocketWindow::windows_;
+
 // static
 gfx::Size SprocketWindow::AdjustWindowSize(const gfx::Size& initial_size) {
   if (!initial_size.IsEmpty())
@@ -40,11 +42,14 @@ SprocketWindow* SprocketWindow::CreateNewWindow(const gfx::Size& initial_size) {
   const gfx::Size& size = SprocketWindow::AdjustWindowSize(initial_size);
   window->PlatformCreateWindow(size.width(), size.height());
 
+  windows_.insert(window);
   return window;
 }
 
 SprocketWindow::~SprocketWindow() {
   delete sprocket_web_contents_;
 
-  base::MessageLoop::current()->PostTask(FROM_HERE, base::MessageLoop::QuitClosure());
+  windows_.erase(this);
+  if (windows_.empty())
+    base::MessageLoop::current()->PostTask(FROM_HERE, base::MessageLoop::QuitClosure());
 }

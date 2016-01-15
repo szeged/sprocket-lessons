@@ -23,6 +23,15 @@ class SprocketWebContentsDelegate : public content::WebContentsDelegate {
       content::BrowserContext* browser_context,
       const GURL& url,
       const gfx::Size& initial_size);
+  static SprocketWebContentsDelegate* AdoptWebContents(
+      SprocketWindow* window,
+      content::WebContents* web_contents);
+  void AddNewContents(content::WebContents* source,
+                      content::WebContents* new_contents,
+                      WindowOpenDisposition disposition,
+                      const gfx::Rect& initial_rect,
+                      bool user_gesture,
+                      bool* was_blocked) override;
   void LoadURL(const GURL& url);
 
   content::WebContents* web_contents() const { return web_contents_.get(); }

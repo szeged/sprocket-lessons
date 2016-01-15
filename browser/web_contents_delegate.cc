@@ -26,6 +26,13 @@ SprocketWebContentsDelegate* SprocketWebContentsDelegate::CreateSprocketWebConte
   return sprocket_web_contents_delegate;
 }
 
+// static
+SprocketWebContentsDelegate* SprocketWebContentsDelegate::AdoptWebContents(
+    SprocketWindow* window,
+    content::WebContents* web_contents) {
+  return new SprocketWebContentsDelegate(window, web_contents);
+}
+
 SprocketWebContentsDelegate::SprocketWebContentsDelegate(SprocketWindow* window,
                                          content::WebContents* web_contents)
     : window_(window) {
@@ -35,6 +42,16 @@ SprocketWebContentsDelegate::SprocketWebContentsDelegate(SprocketWindow* window,
 }
 
 SprocketWebContentsDelegate::~SprocketWebContentsDelegate() {
+}
+
+void SprocketWebContentsDelegate::AddNewContents(content::WebContents* source,
+                                         content::WebContents* new_contents,
+                                         WindowOpenDisposition disposition,
+                                         const gfx::Rect& initial_rect,
+                                         bool user_gesture,
+                                         bool* was_blocked) {
+  SprocketWindow* window = SprocketWindow::CreateNewWindow(gfx::Size(initial_rect.size()));
+  AdoptWebContents(window, new_contents);
 }
 
 void SprocketWebContentsDelegate::LoadURL(const GURL& url) {

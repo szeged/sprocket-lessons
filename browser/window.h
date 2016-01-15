@@ -7,6 +7,7 @@
 #ifndef SPROCKET_BROWSER_UI_WINDOW_H_
 #define SPROCKET_BROWSER_UI_WINDOW_H_
 
+#include <set>
 #include "ui/gfx/geometry/size.h"
 #include "ui/gfx/native_widget_types.h"
 
@@ -36,6 +37,7 @@ class SprocketWindow {
   void PlatformSetContents(SprocketWebContentsDelegate* sprocket_web_contents_delegate);
 
   static views::ViewsDelegate* views_delegate_;
+  static std::set<SprocketWindow*> windows_;
 
   gfx::Size content_size_;
   gfx::NativeWindow window_;
