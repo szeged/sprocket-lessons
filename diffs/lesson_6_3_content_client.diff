@@ -1,0 +1,159 @@
+diff --git a/app/main_delegate.cc b/app/main_delegate.cc
+index b918d76..0a2ba8a 100644
+--- a/app/main_delegate.cc
++++ b/app/main_delegate.cc
+@@ -22,6 +22,8 @@ bool SprocketMainDelegate::BasicStartupComplete(int* exit_code) {
+   pak_file = pak_file.Append(FILE_PATH_LITERAL("sprocket.pak"));
+   ui::ResourceBundle::InitSharedInstanceWithPakPath(pak_file);
+ 
++  content::SetContentClient(&content_client_);
++
+   return false;
+ }
+ 
+diff --git a/app/main_delegate.h b/app/main_delegate.h
+index 9c60352..43967f8 100644
+--- a/app/main_delegate.h
++++ b/app/main_delegate.h
+@@ -10,6 +10,7 @@
+ #include "content/public/app/content_main_delegate.h"
+ 
+ #include "base/memory/scoped_ptr.h"
++#include "sprocket/common/content_client.h"
+ 
+ class SprocketContentBrowserClient;
+ 
+@@ -26,6 +27,8 @@ class SprocketMainDelegate : public content::ContentMainDelegate {
+  private:
+   scoped_ptr<SprocketContentBrowserClient> browser_client_;
+ 
++  SprocketContentClient content_client_;
++
+   DISALLOW_COPY_AND_ASSIGN(SprocketMainDelegate);
+ };
+ 
+diff --git a/browser/net/url_request_context_getter.cc b/browser/net/url_request_context_getter.cc
+index aea2ccd..d5e31fe 100644
+--- a/browser/net/url_request_context_getter.cc
++++ b/browser/net/url_request_context_getter.cc
+@@ -9,7 +9,6 @@
+ #include "base/threading/worker_pool.h"
+ #include "content/public/browser/browser_thread.h"
+ #include "content/public/browser/cookie_store_factory.h"
+-#include "content/public/common/user_agent.h"
+ #include "net/base/network_delegate_impl.h"
+ #include "net/cert/cert_verifier.h"
+ #include "net/http/http_auth_handler_factory.h"
+@@ -25,6 +24,7 @@
+ #include "net/url_request/url_request_context.h"
+ #include "net/url_request/url_request_context_storage.h"
+ #include "net/url_request/url_request_job_factory_impl.h"
++#include "sprocket/common/content_client.h"
+ 
+ SprocketURLRequestContextGetter::SprocketURLRequestContextGetter(
+     const base::FilePath& base_path,
+@@ -70,10 +70,9 @@ net::URLRequestContext* SprocketURLRequestContextGetter::GetURLRequestContext()
+     storage_->set_cookie_store(content::CreateCookieStore(content::CookieStoreConfig()));
+ 
+     // Setting HTTP user agent
+-    std::string product = "Sprocket/" SPROCKET_VERSION;
+     storage_->set_http_user_agent_settings(make_scoped_ptr(
+         new net::StaticHttpUserAgentSettings(
+-        "en-us,en", content::BuildUserAgentFromProduct(product))));
++        "en-us,en", GetSprocketUserAgent())));
+ 
+     // Cache settings
+     base::FilePath cache_path = base_path_.Append(FILE_PATH_LITERAL("Cache"));
+diff --git a/common/content_client.cc b/common/content_client.cc
+new file mode 100644
+index 0000000..ac13461
+--- /dev/null
++++ b/common/content_client.cc
+@@ -0,0 +1,40 @@
++// Copyright (c) 2015 University of Szeged.
++// Copyright (c) 2015 The Chromium Authors.
++// All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#include "sprocket/common/content_client.h"
++
++#include "content/public/common/user_agent.h"
++#include "ui/base/l10n/l10n_util.h"
++#include "ui/base/resource/resource_bundle.h"
++
++std::string GetSprocketUserAgent() {
++  std::string product = "Sprocket/" SPROCKET_VERSION;
++  return content::BuildUserAgentFromProduct(product);
++}
++
++std::string SprocketContentClient::GetUserAgent() const {
++  return GetSprocketUserAgent();
++}
++
++base::string16 SprocketContentClient::GetLocalizedString(int message_id) const {
++  return l10n_util::GetStringUTF16(message_id);
++}
++
++base::StringPiece SprocketContentClient::GetDataResource(
++    int resource_id,
++    ui::ScaleFactor scale_factor) const {
++  return ResourceBundle::GetSharedInstance().GetRawDataResourceForScale(
++      resource_id, scale_factor);
++}
++
++base::RefCountedStaticMemory* SprocketContentClient::GetDataResourceBytes(
++    int resource_id) const {
++  return ResourceBundle::GetSharedInstance().LoadDataResourceBytes(resource_id);
++}
++
++gfx::Image& SprocketContentClient::GetNativeImageNamed(int resource_id) const {
++  return ResourceBundle::GetSharedInstance().GetNativeImageNamed(resource_id);
++}
+diff --git a/common/content_client.h b/common/content_client.h
+new file mode 100644
+index 0000000..9090423
+--- /dev/null
++++ b/common/content_client.h
+@@ -0,0 +1,28 @@
++// Copyright (c) 2015 University of Szeged.
++// Copyright (c) 2015 The Chromium Authors.
++// All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#ifndef SPROCKET_COMMON_CONTENT_CLIENT_H_
++#define SPROCKET_COMMON_CONTENT_CLIENT_H_
++
++#include "content/public/common/content_client.h"
++
++std::string GetSprocketUserAgent();
++
++class SprocketContentClient : public content::ContentClient {
++
++ public:
++  std::string GetUserAgent() const override;
++  base::string16 GetLocalizedString(int message_id) const override;
++  base::StringPiece GetDataResource(
++      int resource_id,
++      ui::ScaleFactor scale_factor) const override;
++  base::RefCountedStaticMemory* GetDataResourceBytes(
++      int resource_id) const override;
++  gfx::Image& GetNativeImageNamed(int resource_id) const override;
++
++};
++
++#endif  // SPROCKET_COMMON_CONTENT_CLIENT_H_
+diff --git a/sprocket.gyp b/sprocket.gyp
+index 54128c7..d71637c 100644
+--- a/sprocket.gyp
++++ b/sprocket.gyp
+@@ -50,6 +50,8 @@
+         'browser/web_contents_delegate.h',
+         'browser/window.cc',
+         'browser/window.h',
++        'common/content_client.cc',
++        'common/content_client.h'
+       ],
+     },
+     {

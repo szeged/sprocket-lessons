@@ -1,0 +1,222 @@
+diff --git a/browser/aura/window_aura.cc b/browser/aura/window_aura.cc
+index 0b39db6..cd7c08e 100644
+--- a/browser/aura/window_aura.cc
++++ b/browser/aura/window_aura.cc
+@@ -7,6 +7,7 @@
+ #include "sprocket/browser/window.h"
+ 
+ #include "sprocket/browser/aura/views_delegate.h"
++#include "sprocket/browser/aura/widget_delegate_view.h"
+ #include "ui/aura/env.h"
+ #include "ui/aura/window.h"
+ #include "ui/aura/window_tree_host.h"
+@@ -34,11 +35,18 @@ void SprocketWindow::PlatformCreateWindow(int width, int height) {
+   window_widget_ = new views::Widget;
+   views::Widget::InitParams params;
+   params.bounds = gfx::Rect(0, 0, width, height);
+-  params.delegate = NULL;
++  delegate_view_ = new SprocketWidgetDelegateView;
++  params.delegate = delegate_view_;
+   window_widget_->Init(params);
+ 
++  content_size_ = gfx::Size(width, height);
+   window_ = window_widget_->GetNativeWindow();
+ 
+   window_->GetHost()->Show();
+   window_widget_->Show();
+ }
++
++void SprocketWindow::PlatformSetContents(SprocketWebContentsDelegate* sprocket_web_contents_delegate) {
++  sprocket_web_contents_ = sprocket_web_contents_delegate;
++  delegate_view_->SetWebContents(sprocket_web_contents_delegate, content_size_);
++}
+diff --git a/browser/browser_main_parts.cc b/browser/browser_main_parts.cc
+index 499c651..b883c39 100644
+--- a/browser/browser_main_parts.cc
++++ b/browser/browser_main_parts.cc
+@@ -7,6 +7,7 @@
+ #include "sprocket/browser/browser_main_parts.h"
+ 
+ #include "sprocket/browser/window.h"
++#include "sprocket/browser/web_contents_delegate.h"
+ #include "ui/base/ime/input_method_initializer.h"
+ 
+ SprocketBrowserMainParts::SprocketBrowserMainParts(
+@@ -21,11 +22,18 @@ void SprocketBrowserMainParts::PreEarlyInitialization() {
+ }
+ 
+ void SprocketBrowserMainParts::PreMainMessageLoopRun() {
++  set_browser_context(new SprocketBrowserContext());
++
+   SprocketWindow::Initialize();
+ 
+-  SprocketWindow::CreateNewWindow(gfx::Size());
++  SprocketWindow* window = SprocketWindow::CreateNewWindow(gfx::Size());
++  SprocketWebContentsDelegate::CreateSprocketWebContentsDelegate(window,
++                                                 browser_context(),
++                                                 GURL("https://www.google.com/"),
++                                                 gfx::Size());
+ }
+ 
+ void SprocketBrowserMainParts::PostMainMessageLoopRun() {
+   SprocketWindow::Deinitialize();
++  browser_context_.reset();
+ }
+diff --git a/browser/browser_main_parts.h b/browser/browser_main_parts.h
+index 3d08eb2..086fc58 100644
+--- a/browser/browser_main_parts.h
++++ b/browser/browser_main_parts.h
+@@ -9,7 +9,9 @@
+ 
+ #include "content/public/browser/browser_main_parts.h"
+ 
++#include "base/memory/scoped_ptr.h"
+ #include "content/public/common/main_function_params.h"
++#include "sprocket/browser/browser_context.h"
+ 
+ class SprocketBrowserMainParts : public content::BrowserMainParts {
+ 
+@@ -22,6 +24,17 @@ class SprocketBrowserMainParts : public content::BrowserMainParts {
+   void PreMainMessageLoopRun() override;
+   void PostMainMessageLoopRun() override;
+ 
++  SprocketBrowserContext* browser_context() {
++    return browser_context_.get();
++  }
++
++  void set_browser_context(SprocketBrowserContext* context) {
++    browser_context_.reset(context);
++  }
++
++ private:
++  scoped_ptr<SprocketBrowserContext> browser_context_;
++
+   DISALLOW_COPY_AND_ASSIGN(SprocketBrowserMainParts);
+ };
+ 
+diff --git a/browser/content_browser_client.cc b/browser/content_browser_client.cc
+index c52ffc4..2c1528a 100644
+--- a/browser/content_browser_client.cc
++++ b/browser/content_browser_client.cc
+@@ -14,3 +14,10 @@ content::BrowserMainParts* SprocketContentBrowserClient::CreateBrowserMainParts(
+   browser_main_parts_ = new SprocketBrowserMainParts(parameters);
+   return browser_main_parts_;
+ }
++
++net::URLRequestContextGetter* SprocketContentBrowserClient::CreateRequestContext(
++    content::BrowserContext* browser_context,
++    content::ProtocolHandlerMap* protocol_handlers,
++    content::URLRequestInterceptorScopedVector request_interceptors) {
++  return browser_main_parts_->browser_context()->CreateRequestContext(protocol_handlers);
++}
+diff --git a/browser/content_browser_client.h b/browser/content_browser_client.h
+index 54b5f47..2ed6bf0 100644
+--- a/browser/content_browser_client.h
++++ b/browser/content_browser_client.h
+@@ -17,6 +17,11 @@ class SprocketContentBrowserClient : public content::ContentBrowserClient {
+   content::BrowserMainParts* CreateBrowserMainParts(
+       const content::MainFunctionParams& parameters) override;
+ 
++  net::URLRequestContextGetter* CreateRequestContext(
++      content::BrowserContext* browser_context,
++      content::ProtocolHandlerMap* protocol_handlers,
++      content::URLRequestInterceptorScopedVector request_interceptors) override;
++
+  private:
+   SprocketBrowserMainParts* browser_main_parts_;
+ };
+diff --git a/browser/web_contents_delegate.cc b/browser/web_contents_delegate.cc
+index 39b094a..120b8c3 100644
+--- a/browser/web_contents_delegate.cc
++++ b/browser/web_contents_delegate.cc
+@@ -20,6 +20,8 @@ SprocketWebContentsDelegate* SprocketWebContentsDelegate::CreateSprocketWebContentsDelegate(
+   content::WebContents* web_contents = content::WebContents::Create(create_params);
+ 
+   SprocketWebContentsDelegate* sprocket_web_contents_delegate = new SprocketWebContentsDelegate(window, web_contents);
++  if (!url.is_empty())
++    sprocket_web_contents_delegate->LoadURL(url);
+ 
+   return sprocket_web_contents_delegate;
+ }
+@@ -28,8 +30,17 @@ SprocketWebContentsDelegate::SprocketWebContentsDelegate(SprocketWindow* window,
+                                          content::WebContents* web_contents)
+     : window_(window) {
+   web_contents_.reset(web_contents);
++  window->PlatformSetContents(this);
+   web_contents->SetDelegate(this);
+ }
+ 
+ SprocketWebContentsDelegate::~SprocketWebContentsDelegate() {
+ }
++
++void SprocketWebContentsDelegate::LoadURL(const GURL& url) {
++  content::NavigationController::LoadURLParams params(url);
++  params.transition_type = ui::PageTransitionFromInt(
++      ui::PAGE_TRANSITION_TYPED | ui::PAGE_TRANSITION_FROM_ADDRESS_BAR);
++  web_contents_->GetController().LoadURLWithParams(params);
++  web_contents_->Focus();
++}
+diff --git a/browser/web_contents_delegate.h b/browser/web_contents_delegate.h
+index c245dcc..6c75f5c 100644
+--- a/browser/web_contents_delegate.h
++++ b/browser/web_contents_delegate.h
+@@ -23,6 +23,7 @@ class SprocketWebContentsDelegate : public content::WebContentsDelegate {
+       content::BrowserContext* browser_context,
+       const GURL& url,
+       const gfx::Size& initial_size);
++  void LoadURL(const GURL& url);
+ 
+   content::WebContents* web_contents() const { return web_contents_.get(); }
+   SprocketWindow* window() { return window_; }
+diff --git a/browser/window.cc b/browser/window.cc
+index f6c67a5..761fc51 100644
+--- a/browser/window.cc
++++ b/browser/window.cc
+@@ -7,6 +7,7 @@
+ #include "sprocket/browser/window.h"
+ 
+ #include "base/message_loop/message_loop.h"
++#include "sprocket/browser/web_contents_delegate.h"
+ 
+ const int kDefaultWindowWidth = 800;
+ const int kDefaultWindowHeight = 600;
+@@ -43,5 +44,7 @@ SprocketWindow* SprocketWindow::CreateNewWindow(const gfx::Size& initial_size) {
+ }
+ 
+ SprocketWindow::~SprocketWindow() {
++  delete sprocket_web_contents_;
++
+   base::MessageLoop::current()->PostTask(FROM_HERE, base::MessageLoop::QuitClosure());
+ }
+diff --git a/browser/window.h b/browser/window.h
+index cbdcb82..b2de094 100644
+--- a/browser/window.h
++++ b/browser/window.h
+@@ -15,6 +15,9 @@ class ViewsDelegate;
+ class Widget;
+ }
+ 
++class SprocketWidgetDelegateView;
++class SprocketWebContentsDelegate;
++
+ class SprocketWindow {
+ 
+  public:
+@@ -30,11 +33,17 @@ class SprocketWindow {
+   static void PlatformExit();
+ 
+   void PlatformCreateWindow(int width, int height);
++  void PlatformSetContents(SprocketWebContentsDelegate* sprocket_web_contents_delegate);
+ 
+   static views::ViewsDelegate* views_delegate_;
+ 
++  gfx::Size content_size_;
+   gfx::NativeWindow window_;
++  SprocketWebContentsDelegate* sprocket_web_contents_;
++  SprocketWidgetDelegateView* delegate_view_;
+   views::Widget* window_widget_;
++
++  friend class SprocketWebContentsDelegate;
+ };
+ 
+ #endif // SPROCKET_BROWSER_UI_WINDOW_H_

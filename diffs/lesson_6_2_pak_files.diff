@@ -1,0 +1,68 @@
+diff --git a/app/main_delegate.cc b/app/main_delegate.cc
+index 0a2ba8a..2e5baec 100644
+--- a/app/main_delegate.cc
++++ b/app/main_delegate.cc
+@@ -6,6 +6,7 @@
+ 
+ #include "sprocket/app/main_delegate.h"
+ 
++#include "base/path_service.h"
+ #include "sprocket/browser/content_browser_client.h"
+ #include "ui/base/resource/resource_bundle.h"
+ 
+@@ -17,6 +18,8 @@ SprocketMainDelegate::~SprocketMainDelegate() {
+ 
+ bool SprocketMainDelegate::BasicStartupComplete(int* exit_code) {
+   base::FilePath pak_file;
++  PathService::Get(base::DIR_MODULE, &pak_file);
++  pak_file = pak_file.Append(FILE_PATH_LITERAL("sprocket.pak"));
+   ui::ResourceBundle::InitSharedInstanceWithPakPath(pak_file);
+ 
+   return false;
+diff --git a/sprocket.gyp b/sprocket.gyp
+index d71637c..f4019c7 100644
+--- a/sprocket.gyp
++++ b/sprocket.gyp
+@@ -27,6 +27,7 @@
+         '<(DEPTH)/content/content.gyp:content_browser',
+         '<(DEPTH)/ui/views/controls/webview/webview.gyp:webview',
+         '<(DEPTH)/ui/views/views.gyp:views',
++        'sprocket_pak',
+       ],
+       'sources': [
+         'app/main_delegate.cc',
+@@ -63,5 +64,34 @@
+       'sources': [
+         'app/main.cc',
+       ],
++    },
++    {
++      'target_name': 'sprocket_pak',
++      'type': 'none',
++      'dependencies': [
++        '<(DEPTH)/content/app/resources/content_resources.gyp:content_resources',
++        '<(DEPTH)/content/app/strings/content_strings.gyp:content_strings',
++        '<(DEPTH)/net/net.gyp:net_resources',
++      ],
++      'actions': [
++        {
++          'action_name': 'repack_sprocket_pack',
++          'variables': {
++          'pak_inputs': [
++            '<(SHARED_INTERMEDIATE_DIR)/blink/public/resources/blink_resources.pak',
++            '<(SHARED_INTERMEDIATE_DIR)/blink/public/resources/blink_image_resources_100_percent.pak',
++            '<(SHARED_INTERMEDIATE_DIR)/content/app/resources/content_resources_100_percent.pak',
++            '<(SHARED_INTERMEDIATE_DIR)/content/content_resources.pak',
++            '<(SHARED_INTERMEDIATE_DIR)/net/net_resources.pak',
++            '<(SHARED_INTERMEDIATE_DIR)/ui/resources/ui_resources_100_percent.pak',
++            '<(SHARED_INTERMEDIATE_DIR)/ui/resources/webui_resources.pak',
++            '<(SHARED_INTERMEDIATE_DIR)/ui/strings/app_locale_settings_en-US.pak',
++            '<(SHARED_INTERMEDIATE_DIR)/ui/strings/ui_strings_en-US.pak',
++          ],
++            'pak_output': '<(PRODUCT_DIR)/sprocket.pak',
++          },
++          'includes': [ '../build/repack_action.gypi' ],
++        },
++      ],
+     }]
+ }
