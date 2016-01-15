@@ -43,6 +43,8 @@
         'browser/net/url_request_context_getter.h',
         'browser/resource_context.cc',
         'browser/resource_context.h',
+        'browser/web_contents_delegate.cc',
+        'browser/web_contents_delegate.h',
         'browser/window.cc',
         'browser/window.h',
       ],
