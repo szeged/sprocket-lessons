@@ -1,0 +1,201 @@
+diff --git a/browser/browser_context.cc b/browser/browser_context.cc
+new file mode 100644
+index 0000000..3b1c9a5
+--- /dev/null
++++ b/browser/browser_context.cc
+@@ -0,0 +1,120 @@
++// Copyright (c) 2015 University of Szeged.
++// Copyright (c) 2015 The Chromium Authors.
++// All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#include "sprocket/browser/browser_context.h"
++
++#include "base/nix/xdg_util.h"
++#include "content/public/browser/browser_thread.h"
++#include "content/public/browser/storage_partition.h"
++#include "sprocket/browser/resource_context.h"
++#include "sprocket/browser/net/url_request_context_getter.h"
++
++SprocketBrowserContext::SprocketBrowserContext()
++    : resource_context_(new SprocketResourceContext) {
++  scoped_ptr<base::Environment> env(base::Environment::Create());
++  base::FilePath config_dir(
++      base::nix::GetXDGDirectory(env.get(),
++                                 base::nix::kXdgConfigHomeEnvVar,
++                                 base::nix::kDotConfigDir));
++  path_ = config_dir.Append("sprocket");
++
++  if (!base::PathExists(path_))
++    base::CreateDirectory(path_);
++}
++
++SprocketBrowserContext::~SprocketBrowserContext() {
++  if (resource_context_) {
++    content::BrowserThread::DeleteSoon(
++        content::BrowserThread::IO, FROM_HERE, resource_context_.release());
++  }
++}
++
++scoped_ptr<content::ZoomLevelDelegate> SprocketBrowserContext::CreateZoomLevelDelegate(
++    const base::FilePath& partition_path) {
++  return NULL;
++}
++
++base::FilePath SprocketBrowserContext::GetPath() const {
++  return path_;
++}
++
++bool SprocketBrowserContext::IsOffTheRecord() const {
++  return false;
++}
++
++net::URLRequestContextGetter*
++SprocketBrowserContext::GetRequestContext() {
++  return GetDefaultStoragePartition(this)->GetURLRequestContext();
++}
++
++net::URLRequestContextGetter*
++SprocketBrowserContext::GetRequestContextForRenderProcess(
++    int renderer_child_id) {
++  return GetRequestContext();
++ }
++
++net::URLRequestContextGetter*
++SprocketBrowserContext::GetMediaRequestContext() {
++  return GetRequestContext();
++}
++
++net::URLRequestContextGetter*
++SprocketBrowserContext::GetMediaRequestContextForRenderProcess(
++    int renderer_child_id) {
++  return GetRequestContext();
++}
++
++net::URLRequestContextGetter*
++SprocketBrowserContext::GetMediaRequestContextForStoragePartition(
++    const base::FilePath& partition_path,
++    bool in_memory) {
++  return GetRequestContext();
++}
++
++content::ResourceContext*
++SprocketBrowserContext::GetResourceContext() {
++  return resource_context_.get();
++}
++
++content::DownloadManagerDelegate*
++SprocketBrowserContext::GetDownloadManagerDelegate() {
++  return NULL;
++}
++
++content::BrowserPluginGuestManager*
++SprocketBrowserContext::GetGuestManager() {
++  return NULL;
++}
++
++storage::SpecialStoragePolicy*
++SprocketBrowserContext::GetSpecialStoragePolicy() {
++  return NULL;
++}
++
++content::PushMessagingService*
++SprocketBrowserContext::GetPushMessagingService() {
++  return NULL;
++}
++
++content::SSLHostStateDelegate*
++SprocketBrowserContext::GetSSLHostStateDelegate() {
++  return NULL;
++}
++
++content::PermissionManager*
++SprocketBrowserContext::GetPermissionManager() {
++  return NULL;
++}
++
++net::URLRequestContextGetter*
++SprocketBrowserContext::CreateRequestContext(
++    content::ProtocolHandlerMap* protocol_handlers) {
++  url_request_getter_ = new SprocketURLRequestContextGetter(
++      GetPath(),
++      protocol_handlers);
++  resource_context_->set_url_request_context_getter(url_request_getter_.get());
++  return url_request_getter_.get();
++}
+diff --git a/browser/browser_context.h b/browser/browser_context.h
+new file mode 100644
+index 0000000..1d34a31
+--- /dev/null
++++ b/browser/browser_context.h
+@@ -0,0 +1,56 @@
++// Copyright (c) 2015 University of Szeged.
++// Copyright (c) 2015 The Chromium Authors.
++// All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#ifndef SPROCKET_BROWSER_BROWSER_CONTEXT_H_
++#define SPROCKET_BROWSER_BROWSER_CONTEXT_H_
++
++#include "content/public/browser/browser_context.h"
++
++#include "base/files/file_util.h"
++#include "content/public/browser/content_browser_client.h"
++
++class SprocketResourceContext;
++class SprocketURLRequestContextGetter;
++
++class SprocketBrowserContext : public content::BrowserContext {
++
++ public:
++  SprocketBrowserContext();
++  ~SprocketBrowserContext() override;
++
++  scoped_ptr<content::ZoomLevelDelegate> CreateZoomLevelDelegate(
++      const base::FilePath& partition_path) override;
++  base::FilePath GetPath() const override;
++  bool IsOffTheRecord() const override;
++  net::URLRequestContextGetter* GetRequestContext() override;
++  net::URLRequestContextGetter* GetRequestContextForRenderProcess(
++      int renderer_child_id) override;
++  net::URLRequestContextGetter* GetMediaRequestContext() override;
++  net::URLRequestContextGetter* GetMediaRequestContextForRenderProcess(
++      int renderer_child_id) override;
++  net::URLRequestContextGetter*
++      GetMediaRequestContextForStoragePartition(
++          const base::FilePath& partition_path,
++          bool in_memory) override;
++  content::ResourceContext* GetResourceContext() override;
++  content::DownloadManagerDelegate* GetDownloadManagerDelegate() override;
++  content::BrowserPluginGuestManager* GetGuestManager() override;
++  storage::SpecialStoragePolicy* GetSpecialStoragePolicy() override;
++  content::PushMessagingService* GetPushMessagingService() override;
++  content::SSLHostStateDelegate* GetSSLHostStateDelegate() override;
++  content::PermissionManager* GetPermissionManager() override;
++  net::URLRequestContextGetter* CreateRequestContext(
++      content::ProtocolHandlerMap* protocol_handlers);
++
++ private:
++  base::FilePath path_;
++  scoped_ptr<SprocketResourceContext> resource_context_;
++  scoped_refptr<SprocketURLRequestContextGetter> url_request_getter_;
++
++  DISALLOW_COPY_AND_ASSIGN(SprocketBrowserContext);
++};
++
++#endif // SPROCKET_BROWSER_BROWSER_CONTEXT_H_
+diff --git a/sprocket.gyp b/sprocket.gyp
+index 9b7b383..620163b 100644
+--- a/sprocket.gyp
++++ b/sprocket.gyp
+@@ -33,6 +33,8 @@
+         'browser/aura/views_delegate.cc',
+         'browser/aura/views_delegate.h',
+         'browser/aura/window_aura.cc',
++        'browser/browser_context.cc',
++        'browser/browser_context.h',
+         'browser/browser_main_parts.cc',
+         'browser/browser_main_parts.h',
+         'browser/content_browser_client.cc',

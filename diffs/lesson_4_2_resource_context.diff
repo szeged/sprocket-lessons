@@ -1,0 +1,90 @@
+diff --git a/browser/resource_context.cc b/browser/resource_context.cc
+new file mode 100644
+index 0000000..f00ef30
+--- /dev/null
++++ b/browser/resource_context.cc
+@@ -0,0 +1,27 @@
++// Copyright (c) 2015 University of Szeged.
++// Copyright (c) 2015 The Chromium Authors.
++// All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#include "sprocket/browser/resource_context.h"
++
++#include "net/url_request/url_request_context.h"
++#include "sprocket/browser/net/url_request_context_getter.h"
++
++SprocketResourceContext::SprocketResourceContext()
++    : getter_(NULL) {
++}
++
++SprocketResourceContext::~SprocketResourceContext() {
++}
++
++net::HostResolver*
++SprocketResourceContext::GetHostResolver() {
++  return getter_->GetURLRequestContext()->host_resolver();
++}
++
++net::URLRequestContext*
++SprocketResourceContext::GetRequestContext() {
++  return getter_->GetURLRequestContext();
++}
+diff --git a/browser/resource_context.h b/browser/resource_context.h
+new file mode 100644
+index 0000000..8745a8c
+--- /dev/null
++++ b/browser/resource_context.h
+@@ -0,0 +1,38 @@
++// Copyright (c) 2015 University of Szeged.
++// Copyright (c) 2015 The Chromium Authors.
++// All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#ifndef SPROCKET_BROWSER_RESOURCE_CONTEXT_H_
++#define SPROCKET_BROWSER_RESOURCE_CONTEXT_H_
++
++#include "content/public/browser/resource_context.h"
++
++namespace net {
++class HostResolver;
++class URLRequestContext;
++}
++
++class SprocketURLRequestContextGetter;
++
++class SprocketResourceContext : public content::ResourceContext {
++
++ public:
++  SprocketResourceContext();
++  ~SprocketResourceContext() override;
++
++  net::HostResolver* GetHostResolver() override;
++  net::URLRequestContext* GetRequestContext() override;
++
++  void set_url_request_context_getter(SprocketURLRequestContextGetter* getter) {
++    getter_ = getter;
++  }
++
++ private:
++  SprocketURLRequestContextGetter* getter_;
++
++  DISALLOW_COPY_AND_ASSIGN(SprocketResourceContext);
++};
++
++#endif // SPROCKET_BROWSER_RESOURCE_CONTEXT_H_
+diff --git a/sprocket.gyp b/sprocket.gyp
+index 8a15e39..9b7b383 100644
+--- a/sprocket.gyp
++++ b/sprocket.gyp
+@@ -39,6 +39,8 @@
+         'browser/content_browser_client.h',
+         'browser/net/url_request_context_getter.cc',
+         'browser/net/url_request_context_getter.h',
++        'browser/resource_context.cc',
++        'browser/resource_context.h',
+         'browser/window.cc',
+         'browser/window.h',
+       ],
