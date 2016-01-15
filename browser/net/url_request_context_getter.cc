@@ -9,7 +9,6 @@
 #include "base/threading/worker_pool.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/cookie_store_factory.h"
-#include "content/public/common/user_agent.h"
 #include "net/base/network_delegate_impl.h"
 #include "net/cert/cert_verifier.h"
 #include "net/http/http_auth_handler_factory.h"
@@ -25,6 +24,7 @@
 #include "net/url_request/url_request_context.h"
 #include "net/url_request/url_request_context_storage.h"
 #include "net/url_request/url_request_job_factory_impl.h"
+#include "sprocket/common/content_client.h"
 
 SprocketURLRequestContextGetter::SprocketURLRequestContextGetter(
     const base::FilePath& base_path,
@@ -70,10 +70,9 @@ net::URLRequestContext* SprocketURLRequestContextGetter::GetURLRequestContext() 
     storage_->set_cookie_store(content::CreateCookieStore(content::CookieStoreConfig()));
 
     // Setting HTTP user agent
-    std::string product = "Sprocket/" SPROCKET_VERSION;
     storage_->set_http_user_agent_settings(make_scoped_ptr(
         new net::StaticHttpUserAgentSettings(
-        "en-us,en", content::BuildUserAgentFromProduct(product))));
+        "en-us,en", GetSprocketUserAgent())));
 
     // Cache settings
     base::FilePath cache_path = base_path_.Append(FILE_PATH_LITERAL("Cache"));

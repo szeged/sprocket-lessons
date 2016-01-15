@@ -10,6 +10,7 @@
 #include "content/public/app/content_main_delegate.h"
 
 #include "base/memory/scoped_ptr.h"
+#include "sprocket/common/content_client.h"
 
 class SprocketContentBrowserClient;
 
@@ -25,6 +26,8 @@ class SprocketMainDelegate : public content::ContentMainDelegate {
 
  private:
   scoped_ptr<SprocketContentBrowserClient> browser_client_;
+
+  SprocketContentClient content_client_;
 
   DISALLOW_COPY_AND_ASSIGN(SprocketMainDelegate);
 };

@@ -51,6 +51,8 @@
         'browser/web_contents_delegate.h',
         'browser/window.cc',
         'browser/window.h',
+        'common/content_client.cc',
+        'common/content_client.h'
       ],
     },
     {

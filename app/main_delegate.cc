@@ -22,6 +22,8 @@ bool SprocketMainDelegate::BasicStartupComplete(int* exit_code) {
   pak_file = pak_file.Append(FILE_PATH_LITERAL("sprocket.pak"));
   ui::ResourceBundle::InitSharedInstanceWithPakPath(pak_file);
 
+  content::SetContentClient(&content_client_);
+
   return false;
 }
 
