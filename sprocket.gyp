@@ -13,6 +13,7 @@
     {
       'target_name': 'sprocket_lib',
       'type': 'static_library',
+      'defines': ['SPROCKET_VERSION="<(sprocket_version)"'],
       'dependencies': [
         # Content dependencies
         '<(DEPTH)/content/content.gyp:content_app_both',
@@ -36,6 +37,8 @@
         'browser/browser_main_parts.h',
         'browser/content_browser_client.cc',
         'browser/content_browser_client.h',
+        'browser/net/url_request_context_getter.cc',
+        'browser/net/url_request_context_getter.h',
         'browser/window.cc',
         'browser/window.h',
       ],
