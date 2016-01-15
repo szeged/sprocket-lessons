@@ -1,0 +1,98 @@
+diff --git a/browser/net/network_delegate.cc b/browser/net/network_delegate.cc
+new file mode 100644
+index 0000000..f419c11
+--- /dev/null
++++ b/browser/net/network_delegate.cc
+@@ -0,0 +1,19 @@
++// Copyright (c) 2015 University of Szeged.
++// Copyright (c) 2015 The Chromium Authors.
++// All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#include "sprocket/browser/net/network_delegate.h"
++
++SprocketNetworkDelegate::SprocketNetworkDelegate() {
++}
++
++SprocketNetworkDelegate::~SprocketNetworkDelegate() {
++}
++
++bool SprocketNetworkDelegate::OnCanAccessFile(
++    const net::URLRequest& request,
++    const base::FilePath& path) const {
++  return true;
++}
+diff --git a/browser/net/network_delegate.h b/browser/net/network_delegate.h
+new file mode 100644
+index 0000000..69a5a3b
+--- /dev/null
++++ b/browser/net/network_delegate.h
+@@ -0,0 +1,25 @@
++// Copyright (c) 2015 University of Szeged.
++// Copyright (c) 2015 The Chromium Authors.
++// All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#ifndef SPROCKET_BROWSER_NET_NETWORK_DELEGATE_H_
++#define SPROCKET_BROWSER_NET_NETWORK_DELEGATE_H_
++
++#include "net/base/network_delegate_impl.h"
++
++class SprocketNetworkDelegate : public net::NetworkDelegateImpl {
++
++ public:
++  SprocketNetworkDelegate();
++  ~SprocketNetworkDelegate() override;
++
++ private:
++  bool OnCanAccessFile(const net::URLRequest& request,
++                       const base::FilePath& path) const override;
++
++  DISALLOW_COPY_AND_ASSIGN(SprocketNetworkDelegate);
++};
++
++#endif // SPROCKET_BROWSER_NET_NETWORK_DELEGATE_H_
+diff --git a/browser/net/url_request_context_getter.cc b/browser/net/url_request_context_getter.cc
+index d5e31fe..eb928bb 100644
+--- a/browser/net/url_request_context_getter.cc
++++ b/browser/net/url_request_context_getter.cc
+@@ -9,7 +9,6 @@
+ #include "base/threading/worker_pool.h"
+ #include "content/public/browser/browser_thread.h"
+ #include "content/public/browser/cookie_store_factory.h"
+-#include "net/base/network_delegate_impl.h"
+ #include "net/cert/cert_verifier.h"
+ #include "net/http/http_auth_handler_factory.h"
+ #include "net/http/http_cache.h"
+@@ -24,6 +23,7 @@
+ #include "net/url_request/url_request_context.h"
+ #include "net/url_request/url_request_context_storage.h"
+ #include "net/url_request/url_request_job_factory_impl.h"
++#include "sprocket/browser/net/network_delegate.h"
+ #include "sprocket/common/content_client.h"
+ 
+ SprocketURLRequestContextGetter::SprocketURLRequestContextGetter(
+@@ -44,7 +44,7 @@ SprocketURLRequestContextGetter::~SprocketURLRequestContextGetter() {
+ net::URLRequestContext* SprocketURLRequestContextGetter::GetURLRequestContext() {
+   if (!url_request_context_) {
+     url_request_context_.reset(new net::URLRequestContext());
+-    network_delegate_.reset(new net::NetworkDelegateImpl);
++    network_delegate_.reset(new SprocketNetworkDelegate);
+     url_request_context_->set_network_delegate(network_delegate_.get());
+ 
+     // Generate Storage
+diff --git a/sprocket.gyp b/sprocket.gyp
+index f4019c7..420cadb 100644
+--- a/sprocket.gyp
++++ b/sprocket.gyp
+@@ -43,6 +43,8 @@
+         'browser/browser_main_parts.h',
+         'browser/content_browser_client.cc',
+         'browser/content_browser_client.h',
++        'browser/net/network_delegate.cc',
++        'browser/net/network_delegate.h',
+         'browser/net/url_request_context_getter.cc',
+         'browser/net/url_request_context_getter.h',
+         'browser/resource_context.cc',

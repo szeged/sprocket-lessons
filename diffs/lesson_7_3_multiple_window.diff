@@ -1,0 +1,104 @@
+diff --git a/browser/web_contents_delegate.cc b/browser/web_contents_delegate.cc
+index 120b8c3..e199834 100644
+--- a/browser/web_contents_delegate.cc
++++ b/browser/web_contents_delegate.cc
+@@ -26,6 +26,13 @@ SprocketWebContentsDelegate* SprocketWebContentsDelegate::CreateSprocketWebContentsDelegate(
+   return sprocket_web_contents_delegate;
+ }
+ 
++// static
++SprocketWebContentsDelegate* SprocketWebContentsDelegate::AdoptWebContents(
++    SprocketWindow* window,
++    content::WebContents* web_contents) {
++  return new SprocketWebContentsDelegate(window, web_contents);
++}
++
+ SprocketWebContentsDelegate::SprocketWebContentsDelegate(SprocketWindow* window,
+                                          content::WebContents* web_contents)
+     : window_(window) {
+@@ -37,6 +44,16 @@ SprocketWebContentsDelegate::SprocketWebContentsDelegate(SprocketWindow* window,
+ SprocketWebContentsDelegate::~SprocketWebContentsDelegate() {
+ }
+ 
++void SprocketWebContentsDelegate::AddNewContents(content::WebContents* source,
++                                         content::WebContents* new_contents,
++                                         WindowOpenDisposition disposition,
++                                         const gfx::Rect& initial_rect,
++                                         bool user_gesture,
++                                         bool* was_blocked) {
++  SprocketWindow* window = SprocketWindow::CreateNewWindow(gfx::Size(initial_rect.size()));
++  AdoptWebContents(window, new_contents);
++}
++
+ void SprocketWebContentsDelegate::LoadURL(const GURL& url) {
+   content::NavigationController::LoadURLParams params(url);
+   params.transition_type = ui::PageTransitionFromInt(
+diff --git a/browser/web_contents_delegate.h b/browser/web_contents_delegate.h
+index 6c75f5c..01d442c 100644
+--- a/browser/web_contents_delegate.h
++++ b/browser/web_contents_delegate.h
+@@ -23,6 +23,15 @@ class SprocketWebContentsDelegate : public content::WebContentsDelegate {
+       content::BrowserContext* browser_context,
+       const GURL& url,
+       const gfx::Size& initial_size);
++  static SprocketWebContentsDelegate* AdoptWebContents(
++      SprocketWindow* window,
++      content::WebContents* web_contents);
++  void AddNewContents(content::WebContents* source,
++                      content::WebContents* new_contents,
++                      WindowOpenDisposition disposition,
++                      const gfx::Rect& initial_rect,
++                      bool user_gesture,
++                      bool* was_blocked) override;
+   void LoadURL(const GURL& url);
+ 
+   content::WebContents* web_contents() const { return web_contents_.get(); }
+diff --git a/browser/window.cc b/browser/window.cc
+index 761fc51..a60a5aa 100644
+--- a/browser/window.cc
++++ b/browser/window.cc
+@@ -12,6 +12,8 @@
+ const int kDefaultWindowWidth = 800;
+ const int kDefaultWindowHeight = 600;
+ 
++std::set<SprocketWindow*> SprocketWindow::windows_;
++
+ // static
+ gfx::Size SprocketWindow::AdjustWindowSize(const gfx::Size& initial_size) {
+   if (!initial_size.IsEmpty())
+@@ -40,11 +42,14 @@ SprocketWindow* SprocketWindow::CreateNewWindow(const gfx::Size& initial_size) {
+   const gfx::Size& size = SprocketWindow::AdjustWindowSize(initial_size);
+   window->PlatformCreateWindow(size.width(), size.height());
+ 
++  windows_.insert(window);
+   return window;
+ }
+ 
+ SprocketWindow::~SprocketWindow() {
+   delete sprocket_web_contents_;
+ 
+-  base::MessageLoop::current()->PostTask(FROM_HERE, base::MessageLoop::QuitClosure());
++  windows_.erase(this);
++  if (windows_.empty())
++    base::MessageLoop::current()->PostTask(FROM_HERE, base::MessageLoop::QuitClosure());
+ }
+diff --git a/browser/window.h b/browser/window.h
+index b2de094..bddeb23 100644
+--- a/browser/window.h
++++ b/browser/window.h
+@@ -7,6 +7,7 @@
+ #ifndef SPROCKET_BROWSER_UI_WINDOW_H_
+ #define SPROCKET_BROWSER_UI_WINDOW_H_
+ 
++#include <set>
+ #include "ui/gfx/geometry/size.h"
+ #include "ui/gfx/native_widget_types.h"
+ 
+@@ -36,6 +37,7 @@ class SprocketWindow {
+   void PlatformSetContents(SprocketWebContentsDelegate* sprocket_web_contents_delegate);
+ 
+   static views::ViewsDelegate* views_delegate_;
++  static std::set<SprocketWindow*> windows_;
+ 
+   gfx::Size content_size_;
+   gfx::NativeWindow window_;
