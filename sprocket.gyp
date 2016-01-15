@@ -27,6 +27,7 @@
         '<(DEPTH)/content/content.gyp:content_browser',
         '<(DEPTH)/ui/views/controls/webview/webview.gyp:webview',
         '<(DEPTH)/ui/views/views.gyp:views',
+        'sprocket_pak',
       ],
       'sources': [
         'app/main_delegate.cc',
@@ -60,6 +61,35 @@
       ],
       'sources': [
         'app/main.cc',
+      ],
+    },
+    {
+      'target_name': 'sprocket_pak',
+      'type': 'none',
+      'dependencies': [
+        '<(DEPTH)/content/app/resources/content_resources.gyp:content_resources',
+        '<(DEPTH)/content/app/strings/content_strings.gyp:content_strings',
+        '<(DEPTH)/net/net.gyp:net_resources',
+      ],
+      'actions': [
+        {
+          'action_name': 'repack_sprocket_pack',
+          'variables': {
+          'pak_inputs': [
+            '<(SHARED_INTERMEDIATE_DIR)/blink/public/resources/blink_resources.pak',
+            '<(SHARED_INTERMEDIATE_DIR)/blink/public/resources/blink_image_resources_100_percent.pak',
+            '<(SHARED_INTERMEDIATE_DIR)/content/app/resources/content_resources_100_percent.pak',
+            '<(SHARED_INTERMEDIATE_DIR)/content/content_resources.pak',
+            '<(SHARED_INTERMEDIATE_DIR)/net/net_resources.pak',
+            '<(SHARED_INTERMEDIATE_DIR)/ui/resources/ui_resources_100_percent.pak',
+            '<(SHARED_INTERMEDIATE_DIR)/ui/resources/webui_resources.pak',
+            '<(SHARED_INTERMEDIATE_DIR)/ui/strings/app_locale_settings_en-US.pak',
+            '<(SHARED_INTERMEDIATE_DIR)/ui/strings/ui_strings_en-US.pak',
+          ],
+            'pak_output': '<(PRODUCT_DIR)/sprocket.pak',
+          },
+          'includes': [ '../build/repack_action.gypi' ],
+        },
       ],
     }]
 }

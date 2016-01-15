@@ -6,6 +6,7 @@
 
 #include "sprocket/app/main_delegate.h"
 
+#include "base/path_service.h"
 #include "sprocket/browser/content_browser_client.h"
 #include "ui/base/resource/resource_bundle.h"
 
@@ -17,6 +18,8 @@ SprocketMainDelegate::~SprocketMainDelegate() {
 
 bool SprocketMainDelegate::BasicStartupComplete(int* exit_code) {
   base::FilePath pak_file;
+  PathService::Get(base::DIR_MODULE, &pak_file);
+  pak_file = pak_file.Append(FILE_PATH_LITERAL("sprocket.pak"));
   ui::ResourceBundle::InitSharedInstanceWithPakPath(pak_file);
 
   return false;
