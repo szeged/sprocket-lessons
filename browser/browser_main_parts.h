@@ -9,7 +9,9 @@
 
 #include "content/public/browser/browser_main_parts.h"
 
+#include "base/memory/scoped_ptr.h"
 #include "content/public/common/main_function_params.h"
+#include "sprocket/browser/browser_context.h"
 
 class SprocketBrowserMainParts : public content::BrowserMainParts {
 
@@ -21,6 +23,17 @@ class SprocketBrowserMainParts : public content::BrowserMainParts {
   void PreEarlyInitialization() override;
   void PreMainMessageLoopRun() override;
   void PostMainMessageLoopRun() override;
+
+  SprocketBrowserContext* browser_context() {
+    return browser_context_.get();
+  }
+
+  void set_browser_context(SprocketBrowserContext* context) {
+    browser_context_.reset(context);
+  }
+
+ private:
+  scoped_ptr<SprocketBrowserContext> browser_context_;
 
   DISALLOW_COPY_AND_ASSIGN(SprocketBrowserMainParts);
 };

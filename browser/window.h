@@ -15,6 +15,9 @@ class ViewsDelegate;
 class Widget;
 }
 
+class SprocketWidgetDelegateView;
+class SprocketWebContentsDelegate;
+
 class SprocketWindow {
 
  public:
@@ -30,11 +33,17 @@ class SprocketWindow {
   static void PlatformExit();
 
   void PlatformCreateWindow(int width, int height);
+  void PlatformSetContents(SprocketWebContentsDelegate* sprocket_web_contents_delegate);
 
   static views::ViewsDelegate* views_delegate_;
 
+  gfx::Size content_size_;
   gfx::NativeWindow window_;
+  SprocketWebContentsDelegate* sprocket_web_contents_;
+  SprocketWidgetDelegateView* delegate_view_;
   views::Widget* window_widget_;
+
+  friend class SprocketWebContentsDelegate;
 };
 
 #endif // SPROCKET_BROWSER_UI_WINDOW_H_

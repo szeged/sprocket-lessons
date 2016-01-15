@@ -17,6 +17,11 @@ class SprocketContentBrowserClient : public content::ContentBrowserClient {
   content::BrowserMainParts* CreateBrowserMainParts(
       const content::MainFunctionParams& parameters) override;
 
+  net::URLRequestContextGetter* CreateRequestContext(
+      content::BrowserContext* browser_context,
+      content::ProtocolHandlerMap* protocol_handlers,
+      content::URLRequestInterceptorScopedVector request_interceptors) override;
+
  private:
   SprocketBrowserMainParts* browser_main_parts_;
 };

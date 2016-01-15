@@ -7,6 +7,7 @@
 #include "sprocket/browser/window.h"
 
 #include "sprocket/browser/aura/views_delegate.h"
+#include "sprocket/browser/aura/widget_delegate_view.h"
 #include "ui/aura/env.h"
 #include "ui/aura/window.h"
 #include "ui/aura/window_tree_host.h"
@@ -34,11 +35,18 @@ void SprocketWindow::PlatformCreateWindow(int width, int height) {
   window_widget_ = new views::Widget;
   views::Widget::InitParams params;
   params.bounds = gfx::Rect(0, 0, width, height);
-  params.delegate = NULL;
+  delegate_view_ = new SprocketWidgetDelegateView;
+  params.delegate = delegate_view_;
   window_widget_->Init(params);
 
+  content_size_ = gfx::Size(width, height);
   window_ = window_widget_->GetNativeWindow();
 
   window_->GetHost()->Show();
   window_widget_->Show();
+}
+
+void SprocketWindow::PlatformSetContents(SprocketWebContentsDelegate* sprocket_web_contents_delegate) {
+  sprocket_web_contents_ = sprocket_web_contents_delegate;
+  delegate_view_->SetWebContents(sprocket_web_contents_delegate, content_size_);
 }

@@ -7,6 +7,7 @@
 #include "sprocket/browser/browser_main_parts.h"
 
 #include "sprocket/browser/window.h"
+#include "sprocket/browser/web_contents_delegate.h"
 #include "ui/base/ime/input_method_initializer.h"
 
 SprocketBrowserMainParts::SprocketBrowserMainParts(
@@ -21,11 +22,18 @@ void SprocketBrowserMainParts::PreEarlyInitialization() {
 }
 
 void SprocketBrowserMainParts::PreMainMessageLoopRun() {
+  set_browser_context(new SprocketBrowserContext());
+
   SprocketWindow::Initialize();
 
-  SprocketWindow::CreateNewWindow(gfx::Size());
+  SprocketWindow* window = SprocketWindow::CreateNewWindow(gfx::Size());
+  SprocketWebContentsDelegate::CreateSprocketWebContentsDelegate(window,
+                                                 browser_context(),
+                                                 GURL("https://www.google.com/"),
+                                                 gfx::Size());
 }
 
 void SprocketBrowserMainParts::PostMainMessageLoopRun() {
   SprocketWindow::Deinitialize();
+  browser_context_.reset();
 }

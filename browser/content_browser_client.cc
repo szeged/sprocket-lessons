@@ -14,3 +14,10 @@ content::BrowserMainParts* SprocketContentBrowserClient::CreateBrowserMainParts(
   browser_main_parts_ = new SprocketBrowserMainParts(parameters);
   return browser_main_parts_;
 }
+
+net::URLRequestContextGetter* SprocketContentBrowserClient::CreateRequestContext(
+    content::BrowserContext* browser_context,
+    content::ProtocolHandlerMap* protocol_handlers,
+    content::URLRequestInterceptorScopedVector request_interceptors) {
+  return browser_main_parts_->browser_context()->CreateRequestContext(protocol_handlers);
+}

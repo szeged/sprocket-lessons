@@ -7,6 +7,7 @@
 #include "sprocket/browser/window.h"
 
 #include "base/message_loop/message_loop.h"
+#include "sprocket/browser/web_contents_delegate.h"
 
 const int kDefaultWindowWidth = 800;
 const int kDefaultWindowHeight = 600;
@@ -43,5 +44,7 @@ SprocketWindow* SprocketWindow::CreateNewWindow(const gfx::Size& initial_size) {
 }
 
 SprocketWindow::~SprocketWindow() {
+  delete sprocket_web_contents_;
+
   base::MessageLoop::current()->PostTask(FROM_HERE, base::MessageLoop::QuitClosure());
 }

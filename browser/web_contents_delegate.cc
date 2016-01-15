@@ -20,6 +20,8 @@ SprocketWebContentsDelegate* SprocketWebContentsDelegate::CreateSprocketWebConte
   content::WebContents* web_contents = content::WebContents::Create(create_params);
 
   SprocketWebContentsDelegate* sprocket_web_contents_delegate = new SprocketWebContentsDelegate(window, web_contents);
+  if (!url.is_empty())
+    sprocket_web_contents_delegate->LoadURL(url);
 
   return sprocket_web_contents_delegate;
 }
@@ -28,8 +30,17 @@ SprocketWebContentsDelegate::SprocketWebContentsDelegate(SprocketWindow* window,
                                          content::WebContents* web_contents)
     : window_(window) {
   web_contents_.reset(web_contents);
+  window->PlatformSetContents(this);
   web_contents->SetDelegate(this);
 }
 
 SprocketWebContentsDelegate::~SprocketWebContentsDelegate() {
+}
+
+void SprocketWebContentsDelegate::LoadURL(const GURL& url) {
+  content::NavigationController::LoadURLParams params(url);
+  params.transition_type = ui::PageTransitionFromInt(
+      ui::PAGE_TRANSITION_TYPED | ui::PAGE_TRANSITION_FROM_ADDRESS_BAR);
+  web_contents_->GetController().LoadURLWithParams(params);
+  web_contents_->Focus();
 }
