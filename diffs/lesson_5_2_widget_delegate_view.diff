@@ -1,0 +1,142 @@
+diff --git a/browser/aura/widget_delegate_view.cc b/browser/aura/widget_delegate_view.cc
+new file mode 100644
+index 0000000..6171dcf
+--- /dev/null
++++ b/browser/aura/widget_delegate_view.cc
+@@ -0,0 +1,67 @@
++// Copyright (c) 2015 University of Szeged.
++// Copyright (c) 2015 The Chromium Authors.
++// All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#include "sprocket/browser/aura/widget_delegate_view.h"
++
++#include "ui/views/controls/webview/webview.h"
++#include "ui/views/background.h"
++#include "ui/views/layout/fill_layout.h"
++#include "ui/views/widget/widget.h"
++#include "sprocket/browser/web_contents_delegate.h"
++#include "sprocket/browser/window.h"
++
++SprocketWidgetDelegateView::SprocketWidgetDelegateView()
++    : sprocket_web_contents_(NULL),
++      contents_view_(new views::View) {
++}
++
++SprocketWidgetDelegateView::~SprocketWidgetDelegateView() {
++}
++
++void SprocketWidgetDelegateView::SetWebContents(SprocketWebContentsDelegate* sprocket_web_contents_delegate,
++    const gfx::Size& size) {
++  sprocket_web_contents_ = sprocket_web_contents_delegate;
++
++  contents_view_->SetLayoutManager(new views::FillLayout());
++
++  content::WebContents* web_contents = sprocket_web_contents_delegate->web_contents();
++  web_view_ = new views::WebView(web_contents->GetBrowserContext());
++  web_view_->SetWebContents(web_contents);
++  web_view_->SetPreferredSize(size);
++  web_contents->Focus();
++
++  contents_view_->AddChildView(web_view_);
++  Layout();
++
++  // Resize the widget, keeping the same origin.
++  gfx::Rect bounds = GetWidget()->GetWindowBoundsInScreen();
++  bounds.set_size(GetWidget()->GetRootView()->GetPreferredSize());
++  GetWidget()->SetBounds(bounds);
++}
++
++void SprocketWidgetDelegateView::InitSprocketWindow() {
++  set_background(views::Background::CreateStandardPanelBackground());
++
++  views::FillLayout* layout = new views::FillLayout();
++  SetLayoutManager(layout);
++
++  AddChildView(contents_view_);
++}
++
++void SprocketWidgetDelegateView::WindowClosing() {
++  delete sprocket_web_contents_->window();
++}
++
++views::View* SprocketWidgetDelegateView::GetContentsView() {
++  return this;
++}
++
++void SprocketWidgetDelegateView::ViewHierarchyChanged(
++    const ViewHierarchyChangedDetails& details) {
++  if (details.is_add && details.child == this) {
++    InitSprocketWindow();
++  }
++}
+diff --git a/browser/aura/widget_delegate_view.h b/browser/aura/widget_delegate_view.h
+new file mode 100644
+index 0000000..d04a815
+--- /dev/null
++++ b/browser/aura/widget_delegate_view.h
+@@ -0,0 +1,42 @@
++// Copyright (c) 2015 University of Szeged.
++// Copyright (c) 2015 The Chromium Authors.
++// All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#ifndef SPROCKET_BROWSER_AURA_WIDGET_DELEGATE_VIEW_H_
++#define SPROCKET_BROWSER_AURA_WIDGET_DELEGATE_VIEW_H_
++
++#include "ui/views/widget/widget_delegate.h"
++
++namespace views {
++class View;
++class WebView;
++}
++
++class SprocketWebContentsDelegate;
++
++class SprocketWidgetDelegateView : public views::WidgetDelegateView {
++
++ public:
++  SprocketWidgetDelegateView();
++  ~SprocketWidgetDelegateView() override;
++
++  void SetWebContents(SprocketWebContentsDelegate* sprocket_web_contents_delegate,
++                      const gfx::Size& size);
++
++ private:
++  void WindowClosing() override;
++  View* GetContentsView() override;
++  void ViewHierarchyChanged( const ViewHierarchyChangedDetails& details) override;
++
++  void InitSprocketWindow();
++
++  SprocketWebContentsDelegate* sprocket_web_contents_;
++  views::View* contents_view_;
++  views::WebView* web_view_;
++
++  DISALLOW_COPY_AND_ASSIGN(SprocketWidgetDelegateView);
++};
++
++#endif // SPROCKET_BROWSER_AURA_WIDGET_DELEGATE_VIEW_H_
+diff --git a/sprocket.gyp b/sprocket.gyp
+index d4d7dfb..54128c7 100644
+--- a/sprocket.gyp
++++ b/sprocket.gyp
+@@ -25,6 +25,7 @@
+         '<(DEPTH)/content/content.gyp:content_resources',
+         '<(DEPTH)/content/content.gyp:content_utility',
+         '<(DEPTH)/content/content.gyp:content_browser',
++        '<(DEPTH)/ui/views/controls/webview/webview.gyp:webview',
+         '<(DEPTH)/ui/views/views.gyp:views',
+       ],
+       'sources': [
+@@ -32,6 +33,8 @@
+         'app/main_delegate.h',
+         'browser/aura/views_delegate.cc',
+         'browser/aura/views_delegate.h',
++        'browser/aura/widget_delegate_view.cc',
++        'browser/aura/widget_delegate_view.h',
+         'browser/aura/window_aura.cc',
+         'browser/browser_context.cc',
+         'browser/browser_context.h',
