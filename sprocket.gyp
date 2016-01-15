@@ -43,6 +43,8 @@
         'browser/browser_main_parts.h',
         'browser/content_browser_client.cc',
         'browser/content_browser_client.h',
+        'browser/net/network_delegate.cc',
+        'browser/net/network_delegate.h',
         'browser/net/url_request_context_getter.cc',
         'browser/net/url_request_context_getter.h',
         'browser/resource_context.cc',

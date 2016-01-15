@@ -9,7 +9,6 @@
 #include "base/threading/worker_pool.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/cookie_store_factory.h"
-#include "net/base/network_delegate_impl.h"
 #include "net/cert/cert_verifier.h"
 #include "net/http/http_auth_handler_factory.h"
 #include "net/http/http_cache.h"
@@ -24,6 +23,7 @@
 #include "net/url_request/url_request_context.h"
 #include "net/url_request/url_request_context_storage.h"
 #include "net/url_request/url_request_job_factory_impl.h"
+#include "sprocket/browser/net/network_delegate.h"
 #include "sprocket/common/content_client.h"
 
 SprocketURLRequestContextGetter::SprocketURLRequestContextGetter(
@@ -44,7 +44,7 @@ SprocketURLRequestContextGetter::~SprocketURLRequestContextGetter() {
 net::URLRequestContext* SprocketURLRequestContextGetter::GetURLRequestContext() {
   if (!url_request_context_) {
     url_request_context_.reset(new net::URLRequestContext());
-    network_delegate_.reset(new net::NetworkDelegateImpl);
+    network_delegate_.reset(new SprocketNetworkDelegate);
     url_request_context_->set_network_delegate(network_delegate_.get());
 
     // Generate Storage
